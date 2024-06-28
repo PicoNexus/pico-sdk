@@ -39,6 +39,11 @@
 static stdio_driver_t *drivers;
 static stdio_driver_t *filter;
 
+/* For libpicolibc */
+#ifdef _PICOLIBC__
+FILE *const stdout = NULL;
+#endif
+
 #if PICO_STDOUT_MUTEX
 auto_init_mutex(print_mutex);
 
