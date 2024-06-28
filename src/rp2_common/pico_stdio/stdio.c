@@ -39,9 +39,19 @@
 static stdio_driver_t *drivers;
 static stdio_driver_t *filter;
 
-/* For libpicolibc */
+/* For picolibc */
 #ifdef _PICOLIBC__
-FILE *const stdout = NULL;
+
+static int picolibc_putc(char c, FILE *file);
+static int picolibc_getc(FILE *file);
+static int picolibc_flush(FILE *file);
+
+static FILE __stdio = FDEV_SETUP_STREAM(picolibc_putc,
+					picolibc_getc,
+					NULL,
+					_FDEV_SETUP_RW);
+
+FILE *const stdin = &__stdio; __strong_reference(stdin, stdout); __strong_reference(stdin, stderr);
 #endif
 
 #if PICO_STDOUT_MUTEX
@@ -346,3 +356,33 @@ void stdio_set_chars_available_callback(void (*fn)(void*), void *param) {
         if (s->set_chars_available_callback) s->set_chars_available_callback(fn, param);
     }
 }
+
+/* For picolibc */
+#ifdef _PICOLIBC__
+static int
+picolibc_putc(char c, FILE *file)
+{
+	(void) file;
+	putchar_raw(c);
+	return c;
+}
+
+static int
+picolibc_getc(FILE *file)
+{
+	unsigned char c;
+	(void) file;
+	c = getchar();
+	return c;
+}
+
+
+static int
+picolibc_flush(FILE *file)
+{
+	(void) file;
+	stdio_flush();
+	return 0;
+}
+#endif
+
